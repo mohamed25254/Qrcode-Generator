@@ -15,6 +15,7 @@
       padding: 20px;
       text-align: center;
       transition: background-color 0.3s, color 0.3s;
+      -webkit-transition: background-color 0.3s, color 0.3s;
     }
     /* زر تبديل الثيم في أعلى اليسار */
     #theme-toggle {
@@ -27,9 +28,11 @@
       cursor: pointer;
       z-index: 1000;
       transition: transform 0.3s;
+      -webkit-transition: transform 0.3s;
     }
     #theme-toggle:hover {
       transform: scale(1.2);
+      -webkit-transform: scale(1.2);
     }
     .container {
       max-width: 500px;
@@ -37,6 +40,7 @@
       padding: 20px;
       border-radius: 10px;
       transition: background-color 0.3s, color 0.3s;
+      -webkit-transition: background-color 0.3s, color 0.3s;
     }
     .section {
       margin-top: 20px;
@@ -66,6 +70,7 @@
       margin: 10px 0;
       font-size: 16px;
       transition: background-color 0.3s;
+      -webkit-transition: background-color 0.3s;
     }
     #style-toggle:hover {
       background-color: #45a049;
@@ -76,12 +81,13 @@
       max-height: 0;
       opacity: 0;
       transition: max-height 0.5s ease-out, opacity 0.5s ease-out;
+      -webkit-transition: max-height 0.5s ease-out, opacity 0.5s ease-out;
     }
     #style-options.expanded {
       max-height: 1000px; /* رقم كبير يستوعب كل المحتوى */
       opacity: 1;
     }
-    /* زر النجمة لكل قسم */
+    /* زر النجمة لكل قسم (لأداء وظيفة Accordion فرعي) */
     .accordion-toggle {
       background: transparent;
       border: none;
@@ -90,20 +96,23 @@
       margin-left: 10px;
       color: gold;
       transition: transform 0.2s;
+      -webkit-transition: transform 0.2s;
     }
     .accordion-toggle:hover {
       transform: scale(1.2);
+      -webkit-transform: scale(1.2);
     }
-    /* حاوية محتوى كل قسم */
+    /* محتوى كل قسم Accordion فرعي */
     .accordion-content {
       overflow: hidden;
       max-height: 0;
       opacity: 0;
       transition: max-height 0.5s ease-out, opacity 0.5s ease-out;
-      margin-bottom: 10px; /* مسافة بسيطة تحت القسم */
+      -webkit-transition: max-height 0.5s ease-out, opacity 0.5s ease-out;
+      margin-bottom: 10px;
     }
     .accordion-content.expanded {
-      max-height: 500px; /* رقم يكفي لمحتوى الأشكال */
+      max-height: 500px;
       opacity: 1;
     }
     /* حاوية رمز QR */
@@ -175,7 +184,7 @@
     <!-- زر Style لتبديل عرض الحقول الرئيسية -->
     <button id="style-toggle">Style ★</button>
     
-    <!-- منطقة الحقول القابلة للطي (كل أقسام التصميم) -->
+    <!-- منطقة الحقول القابلة للطي (جميع أقسام التصميم) -->
     <div id="style-options">
       
       <!-- ====== قسم أشكال جسم الـQR (Body) ====== -->
@@ -330,12 +339,18 @@
     
     function updateQRCode() {
       const data = document.getElementById("input-data").value || "https://example.com";
-      qrCode.update({
+      let options = {
         data: data,
         dotsOptions: { type: currentBodyShape },
         cornersSquareOptions: { type: currentEyeFrame },
         cornersDotOptions: { type: currentEyeBall }
-      });
+      };
+      // إذا كان اللوجو متاحًا (ومرفوعًا)، قم بتحديث خيار image
+      if (logoImg.src && logoImg.style.display !== "none") {
+        options.image = logoImg.src;
+        options.imageOptions = { crossOrigin: "anonymous", margin: 0 };
+      }
+      qrCode.update(options);
       document.getElementById("qr-code").innerHTML = "";
       qrCode.append(document.getElementById("qr-code"));
     }
@@ -373,6 +388,7 @@
           logoImg.src = newSrc;
           logoImg.style.display = "block";
           updateLogoStyle();
+          updateQRCode();
         } catch (err) {
           alert("حدث خطأ في إزالة الخلفية: " + err.message);
         }
@@ -382,6 +398,7 @@
           logoImg.src = event.target.result;
           logoImg.style.display = "block";
           updateLogoStyle();
+          updateQRCode();
         };
         reader.readAsDataURL(file);
       }
@@ -420,10 +437,10 @@
       logoImg.style.borderRadius = (haloShape === "circle") ? "50%" : "0";
     }
     
-    document.getElementById("logo-size").addEventListener("input", updateLogoStyle);
-    document.getElementById("halo-size").addEventListener("input", updateLogoStyle);
-    document.getElementById("halo-shape").addEventListener("change", updateLogoStyle);
-    document.getElementById("halo-color").addEventListener("input", updateLogoStyle);
+    document.getElementById("logo-size").addEventListener("input", () => { updateLogoStyle(); updateQRCode(); });
+    document.getElementById("halo-size").addEventListener("input", () => { updateLogoStyle(); updateQRCode(); });
+    document.getElementById("halo-shape").addEventListener("change", () => { updateLogoStyle(); updateQRCode(); });
+    document.getElementById("halo-color").addEventListener("input", () => { updateLogoStyle(); updateQRCode(); });
     document.getElementById("remove-bg").addEventListener("change", () => {
       if (logoUpload.files[0]) {
         logoUpload.dispatchEvent(new Event("change"));
@@ -452,29 +469,24 @@
       }
     });
     
-    // ========== 7) أزرار النجمة لكل قسم (Body/Eye Frame/Eye Ball) ==========
-    // هذه الأزرار فقط تطوي/تفتح القسم المعني (مثل accordion فرعي)
+    // ========== 7) أزرار النجمة لكل قسم (Accordion فرعي) ==========
     const accordionToggles = document.querySelectorAll(".accordion-toggle");
     accordionToggles.forEach(toggleBtn => {
       toggleBtn.addEventListener("click", (e) => {
-        // قلب النجمة بين "★" و "☆"
         if (toggleBtn.textContent.trim() === "☆") {
           toggleBtn.textContent = "★";
         } else {
           toggleBtn.textContent = "☆";
         }
-        // الحصول على العنصر المستهدف
         const targetId = toggleBtn.dataset.target;
         const contentDiv = document.getElementById(targetId);
-        // قلب الـ expanded class
         contentDiv.classList.toggle("expanded");
-        // منع تفعيل أي حدث آخر
         e.stopPropagation();
       });
     });
     
-    // تحديث أولي للـQR
+    // التحديث الأولي للـQR
     updateQRCode();
   </script>
-</body
+</body>
 </html>
