@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>مولد رموز QR المتقدم</title>
+  
+  <!-- مكتبة توليد رمز QR -->
+  <script src="https://unpkg.com/qr-code-styling/lib/qr-code-styling.js"></script>
+  
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    /* زر تبديل الثيم في أعلى اليسار */
+    #theme-toggle {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      background: transparent;
+      border: none;
+      font-size: 32px;
+      cursor: pointer;
+      z-index: 1000;
+      transition: transform 0.3s;
+    }
+    #theme-toggle:hover {
+      transform: scale(1.2);
+    }
+    .container {
+      max-width: 500px;
+      margin: 40px auto 20px auto;
+      padding: 20px;
+      border-radius: 10px;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    .section {
+      margin-top: 20px;
+      text-align: left;
+    }
+    h1, h2, label {
+      margin: 10px 0 5px;
+    }
+    input, select, button {
+      width: 100%;
+      margin: 10px 0;
+      padding: 10px;
+      border-radius: 5px;
+      border: none;
+      font-size: 16px;
+    }
+    button {
+      cursor: pointer;
+    }
+    /* زر Style لتبديل عرض الحقول */
+    #style-toggle {
+      background-color: #4caf50;
+      color: #fff;
+      border: none;
+      padding: 10px;
+      border-radius: 5px;
+      margin: 10px 0;
+      font-size: 16px;
+      transition: background-color 0.3s;
+    }
+    #style-toggle:hover {
+      background-color: #45a049;
+    }
+    /* منطقة الحقول القابلة للطي (جميع أقسام التصميم) */
+    #style-options {
+      overflow: hidden;
+      max-height: 0;
+      opacity: 0;
+      transition: max-height 0.5s ease-out, opacity 0.5s ease-out;
+    }
+    #style-options.expanded {
+      max-height: 1000px; /* رقم كبير يستوعب كل المحتوى */
+      opacity: 1;
+    }
+    /* زر النجمة لكل قسم */
+    .accordion-toggle {
+      background: transparent;
+      border: none;
+      font-size: 18px;
+      cursor: pointer;
+      margin-left: 10px;
+      color: gold;
+      transition: transform 0.2s;
+    }
+    .accordion-toggle:hover {
+      transform: scale(1.2);
+    }
+    /* حاوية محتوى كل قسم */
+    .accordion-content {
+      overflow: hidden;
+      max-height: 0;
+      opacity: 0;
+      transition: max-height 0.5s ease-out, opacity 0.5s ease-out;
+      margin-bottom: 10px; /* مسافة بسيطة تحت القسم */
+    }
+    .accordion-content.expanded {
+      max-height: 500px; /* رقم يكفي لمحتوى الأشكال */
+      opacity: 1;
+    }
+    /* حاوية رمز QR */
+    .qr-container {
+      position: relative;
+      width: 300px;
+      height: 300px;
+      margin: 20px auto;
+    }
+    #qr-code {
+      width: 100%;
+      height: 100%;
+    }
+    /* صورة اللوجو فوق رمز QR */
+    #logo-img {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: none;
+      border: none;
+      box-shadow: none;
+    }
+    /* شبكة الأشكال */
+    .shapes-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .shape-option {
+      width: 50px;
+      height: 50px;
+      background-color: #333;
+      background-size: cover;
+      background-position: center;
+      cursor: pointer;
+      border: 2px solid transparent;
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+    }
+    .shape-option:hover {
+      border-color: #aaa;
+    }
+    .shape-option.active {
+      border-color: #4caf50;
+    }
+    .shape-option span {
+      color: #fff;
+      text-shadow: 0 0 2px #000;
+    }
+  </style>
+</head>
+<body>
+  <!-- زر تبديل الثيم في أعلى اليسار -->
+  <button id="theme-toggle" title="تبديل الوضع">☀️</button>
+  
+  <div class="container">
+    <h1>مولد رموز QR المتقدم</h1>
+    
+    <!-- حقل إدخال النص -->
+    <div class="section">
+      <input type="text" id="input-data" placeholder="أدخل النص أو الرابط هنا..." dir="ltr"/>
+    </div>
+    
+    <!-- زر Style لتبديل عرض الحقول الرئيسية -->
+    <button id="style-toggle">Style ★</button>
+    
+    <!-- منطقة الحقول القابلة للطي (كل أقسام التصميم) -->
+    <div id="style-options">
+      
+      <!-- ====== قسم أشكال جسم الـQR (Body) ====== -->
+      <div class="section">
+        <h2>
+          أشكال جسم الـQR (Body)
+          <button class="accordion-toggle" data-target="body-content">☆</button>
+        </h2>
+        <div id="body-content" class="accordion-content">
+          <div class="shapes-grid" id="body-shapes">
+            <div class="shape-option active" data-value="square">
+              <span>Square</span>
+            </div>
+            <div class="shape-option" data-value="dots">
+              <span>Dots</span>
+            </div>
+            <div class="shape-option" data-value="rounded">
+              <span>Rounded</span>
+            </div>
+            <div class="shape-option" data-value="classy">
+              <span>Classy</span>
+            </div>
+            <div class="shape-option" data-value="classy-rounded">
+              <span>Classy R.</span>
+            </div>
+            <div class="shape-option" data-value="extra-rounded">
+              <span>Extra R.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- ====== قسم إطار العيون (Eye Frame) ====== -->
+      <div class="section">
+        <h2>
+          إطار العيون (Eye Frame)
+          <button class="accordion-toggle" data-target="eye-frame-content">☆</button>
+        </h2>
+        <div id="eye-frame-content" class="accordion-content">
+          <div class="shapes-grid" id="eye-frame-shapes">
+            <div class="shape-option active" data-value="square">
+              <span>Square</span>
+            </div>
+            <div class="shape-option" data-value="dot">
+              <span>Dot</span>
+            </div>
+            <div class="shape-option" data-value="rounded">
+              <span>Rounded</span>
+            </div>
+            <div class="shape-option" data-value="extra-rounded">
+              <span>Extra R.</span>
+            </div>
+            <div class="shape-option" data-value="classy">
+              <span>Classy</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- ====== قسم داخل العيون (Eye Ball) ====== -->
+      <div class="section">
+        <h2>
+          داخل العيون (Eye Ball)
+          <button class="accordion-toggle" data-target="eye-ball-content">☆</button>
+        </h2>
+        <div id="eye-ball-content" class="accordion-content">
+          <div class="shapes-grid" id="eye-ball-shapes">
+            <div class="shape-option active" data-value="square">
+              <span>Square</span>
+            </div>
+            <div class="shape-option" data-value="dot">
+              <span>Dot</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- ====== قسم تخصيص اللوجو ====== -->
+      <div class="section">
+        <h2>تخصيص اللوجو</h2>
+        <input type="file" id="logo-upload" accept="image/*"/>
+        <label>إزالة الخلفية فعليًا (باستخدام remove.bg):</label>
+        <input type="checkbox" id="remove-bg"/>
+        <label>حجم اللوجو (% من رمز QR):</label>
+        <input type="range" id="logo-size" min="10" max="100" value="30"/>
+        <label>حجم الهالة (بالبكسل):</label>
+        <input type="range" id="halo-size" min="0" max="50" value="10"/>
+        <label>شكل الهالة:</label>
+        <select id="halo-shape">
+          <option value="circle">دائري</option>
+          <option value="square">مربّع</option>
+        </select>
+        <label>لون الهالة:</label>
+        <input type="color" id="halo-color" value="#ffffff"/>
+      </div>
+    </div>
+    
+    <!-- عرض رمز QR مع اللوجو -->
+    <div class="qr-container">
+      <div id="qr-code"></div>
+      <img id="logo-img" src="" alt="Logo"/>
+    </div>
+    
+    <!-- زر تحميل رمز الـQR بجودة عالية -->
+    <button id="download-btn">تحميل رمز QR بجودة عالية</button>
+  </div>
+  
+  <script>
+    // ========== 1) التبديل بين الوضع الليلي والنهاري ==========
+    let isDark = true; // الوضع الافتراضي داكن
+    const themeToggleBtn = document.getElementById("theme-toggle");
+    
+    function applyTheme() {
+      const body = document.body;
+      const container = document.querySelector(".container");
+      
+      if (isDark) {
+        body.style.backgroundColor = "#121212";
+        body.style.color = "#fff";
+        container.style.backgroundColor = "#222";
+        container.style.color = "#fff";
+        themeToggleBtn.textContent = "☀️"; // أيقونة الشمس
+      } else {
+        body.style.backgroundColor = "#fff";
+        body.style.color = "#000";
+        container.style.backgroundColor = "#f0f0f0";
+        container.style.color = "#000";
+        themeToggleBtn.textContent = "🌚"; // أيقونة القمر
+      }
+    }
+    themeToggleBtn.addEventListener("click", () => {
+      isDark = !isDark;
+      applyTheme();
+    });
+    applyTheme();
+    
+    // ========== 2) إنشاء رمز QR باستخدام مكتبة qr-code-styling ==========
+    const REMOVE_BG_API_KEY = "9GvsbB8KT8vBbVH3F2CmwHer"; // يُفضّل استدعاؤه من السيرفر
+    let currentBodyShape = "square";
+    let currentEyeFrame = "square";
+    let currentEyeBall = "square";
+    
+    const qrCode = new QRCodeStyling({
+      width: 300,
+      height: 300,
+      data: "https://example.com",
+      dotsOptions: { type: currentBodyShape, color: "#000000" },
+      cornersSquareOptions: { type: currentEyeFrame },
+      cornersDotOptions: { type: currentEyeBall }
+    });
+    qrCode.append(document.getElementById("qr-code"));
+    
+    function updateQRCode() {
+      const data = document.getElementById("input-data").value || "https://example.com";
+      qrCode.update({
+        data: data,
+        dotsOptions: { type: currentBodyShape },
+        cornersSquareOptions: { type: currentEyeFrame },
+        cornersDotOptions: { type: currentEyeBall }
+      });
+      document.getElementById("qr-code").innerHTML = "";
+      qrCode.append(document.getElementById("qr-code"));
+    }
+    
+    document.getElementById("input-data").addEventListener("input", updateQRCode);
+    
+    function setupShapeGrid(gridId, onChangeCallback) {
+      const grid = document.getElementById(gridId);
+      const items = grid.querySelectorAll(".shape-option");
+      items.forEach(item => {
+        item.addEventListener("click", () => {
+          items.forEach(i => i.classList.remove("active"));
+          item.classList.add("active");
+          onChangeCallback(item.dataset.value);
+          updateQRCode();
+        });
+      });
+    }
+    
+    setupShapeGrid("body-shapes", val => currentBodyShape = val);
+    setupShapeGrid("eye-frame-shapes", val => currentEyeFrame = val);
+    setupShapeGrid("eye-ball-shapes", val => currentEyeBall = val);
+    
+    // ========== 3) رفع اللوجو وإزالة الخلفية باستخدام remove.bg ==========
+    const logoUpload = document.getElementById("logo-upload");
+    const logoImg = document.getElementById("logo-img");
+    
+    logoUpload.addEventListener("change", async function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const useRemoveBg = document.getElementById("remove-bg").checked;
+      if (useRemoveBg) {
+        try {
+          const newSrc = await removeBackgroundFromImage(file);
+          logoImg.src = newSrc;
+          logoImg.style.display = "block";
+          updateLogoStyle();
+        } catch (err) {
+          alert("حدث خطأ في إزالة الخلفية: " + err.message);
+        }
+      } else {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          logoImg.src = event.target.result;
+          logoImg.style.display = "block";
+          updateLogoStyle();
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+    
+    async function removeBackgroundFromImage(file) {
+      const formData = new FormData();
+      formData.append("image_file", file);
+      formData.append("size", "auto");
+      const response = await fetch("https://api.remove.bg/v1.0/removebg", {
+        method: "POST",
+        headers: { "X-Api-Key": REMOVE_BG_API_KEY },
+        body: formData
+      });
+      if (!response.ok) {
+        throw new Error(`remove.bg API Error: ${response.statusText}`);
+      }
+      const blob = await response.blob();
+      return URL.createObjectURL(blob);
+    }
+    
+    // ========== 4) التحكم في حجم اللوجو والهالة ==========
+    function updateLogoStyle() {
+      const logoSizeVal = document.getElementById("logo-size").value;
+      const haloSizeVal = document.getElementById("halo-size").value;
+      const haloShape = document.getElementById("halo-shape").value;
+      const haloColor = document.getElementById("halo-color").value;
+      
+      const logoSizePx = 300 * (logoSizeVal / 100);
+      logoImg.style.width = logoSizePx + "px";
+      logoImg.style.height = "auto";
+      
+      // استخدام الخلفية + padding كـ "هالة" خلف الشعار
+      logoImg.style.backgroundColor = haloColor;
+      logoImg.style.padding = haloSizeVal + "px";
+      logoImg.style.borderRadius = (haloShape === "circle") ? "50%" : "0";
+    }
+    
+    document.getElementById("logo-size").addEventListener("input", updateLogoStyle);
+    document.getElementById("halo-size").addEventListener("input", updateLogoStyle);
+    document.getElementById("halo-shape").addEventListener("change", updateLogoStyle);
+    document.getElementById("halo-color").addEventListener("input", updateLogoStyle);
+    document.getElementById("remove-bg").addEventListener("change", () => {
+      if (logoUpload.files[0]) {
+        logoUpload.dispatchEvent(new Event("change"));
+      }
+    });
+    
+    // ========== 5) زر تحميل رمز الـQR بجودة عالية ==========
+    document.getElementById("download-btn").addEventListener("click", () => {
+      qrCode.download({
+        name: "qr-code",
+        extension: "png",
+        scale: 6
+      });
+    });
+    
+    // ========== 6) زر Style لتبديل عرض جميع أقسام التصميم (Accordion رئيسي) ==========
+    const styleToggleBtn = document.getElementById("style-toggle");
+    const styleOptions = document.getElementById("style-options");
+    let styleExpanded = false;
+    styleToggleBtn.addEventListener("click", () => {
+      styleExpanded = !styleExpanded;
+      if (styleExpanded) {
+        styleOptions.classList.add("expanded");
+      } else {
+        styleOptions.classList.remove("expanded");
+      }
+    });
+    
+    // ========== 7) أزرار النجمة لكل قسم (Body/Eye Frame/Eye Ball) ==========
+    // هذه الأزرار فقط تطوي/تفتح القسم المعني (مثل accordion فرعي)
+    const accordionToggles = document.querySelectorAll(".accordion-toggle");
+    accordionToggles.forEach(toggleBtn => {
+      toggleBtn.addEventListener("click", (e) => {
+        // قلب النجمة بين "★" و "☆"
+        if (toggleBtn.textContent.trim() === "☆") {
+          toggleBtn.textContent = "★";
+        } else {
+          toggleBtn.textContent = "☆";
+        }
+        // الحصول على العنصر المستهدف
+        const targetId = toggleBtn.dataset.target;
+        const contentDiv = document.getElementById(targetId);
+        // قلب الـ expanded class
+        contentDiv.classList.toggle("expanded");
+        // منع تفعيل أي حدث آخر
+        e.stopPropagation();
+      });
+    });
+    
+    // تحديث أولي للـQR
+    updateQRCode();
+  </script>
+</body
+</html>
